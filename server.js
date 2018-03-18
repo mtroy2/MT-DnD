@@ -72,3 +72,42 @@ function handleError(res, reason, message, code) {
      }
    });
  });
+
+ /*  "/api/npcs/:id"
+  *    GET: find npc by id
+  *    PUT: update npc by id
+  *    DELETE: deletes npc by id
+  */
+ app.get("/api/npcs/:id", function(req, res) {
+   db.collection(NPCS_COLLECTION).findOne({ _id: new ObjectID(req.params.id) }, function(err, doc) {
+     if (err) {
+       handleError(res, err.message, "Failed to get npc");
+     } else {
+       res.status(200).json(doc);
+     }
+   });
+ });
+
+ app.put("/api/npcs/:id", function(req, res) {
+   var updateDoc = req.body;
+   delete updateDoc._id;
+
+   db.collection(NPCS_COLLECTION).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err, doc) {
+     if (err) {
+       handleError(res, err.message, "Failed to update npc");
+     } else {
+       updateDoc._id = req.params.id;
+       res.status(200).json(updateDoc);
+     }
+   });
+ });
+
+ app.delete("/api/npcs/:id", function(req, res) {
+   db.collection(NPCS_COLLECTION).deleteOne({_id: new ObjectID(req.params.id)}, function(err, result) {
+     if (err) {
+       handleError(res, err.message, "Failed to delete npc");
+     } else {
+       res.status(200).json(req.params.id);
+     }
+   });
+ });
