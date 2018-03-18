@@ -1,9 +1,26 @@
 var express = require("express");
 var bodyParser = require("body-parser");
+var mongoose = require ("mongoose");
 var mongodb = require("mongodb");
 var ObjectID = mongodb.ObjectID;
+var models;
+var uristring =
+  process.env.MONGODB_URI ||
+  process.env.MONGOHQ_URL ||
+  'mongodb://localhost/MT-DnD';
 
-var NPCS_COLLECTION = "npcs";
+var theport = process.env.PORT || 8080;
+
+// Makes connection asynchronously.  Mongoose will queue up database
+   // operations and release them when the connection is complete.
+mongoose.connect(uristring, function (err, res) {
+  if (err) {
+    console.log ('ERROR connecting to: ' + uristring + '. ' + err);
+    process.exit(1);
+  } else {
+    console.log ('Succeeded connected to: ' + uristring);
+  }
+});
 
 var app = express();
 app.use(bodyParser.json());
@@ -12,28 +29,37 @@ app.use(bodyParser.json());
 var distDir = __dirname + "/dist/";
 app.use(express.static(distDir));
 
-// Create a database variable outside of the database connection callback to reuse the connection pool in your app.
-var db;
-
-// Connect to the database before starting the application server.
-mongodb.MongoClient.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/test", function (err, client) {
-  if (err) {
-    console.log(err);
-    process.exit(1);
-  }
-
-  // Save database object from the callback for reuse.
-  db = client.db();
+// CONNECTION EVENTS
+// When successfully connected
+mongoose.connection.on('connected', function () {
   console.log("Database connection ready");
 
   // Initialize the app.
-  var server = app.listen(process.env.PORT || 8080, function () {
+  var server = app.listen(theport, function () {
     var port = server.address().port;
     console.log("App now running on port", port);
   });
+
+  models = require('./models')(mongoose);
 });
 
-// NPCS API ROUTES BELOW
+// If the connection throws an error
+mongoose.connection.on('error',function (err) {
+  console.log('Mongoose default connection error: ' + err);
+});
+
+// When the connection is disconnected
+mongoose.connection.on('disconnected', function () {
+  console.log('Mongoose default connection disconnected');
+});
+
+// If the Node process ends, close the Mongoose connection
+process.on('SIGINT', function() {
+  mongoose.connection.close(function () {
+    console.log('Mongoose default connection disconnected through app termination');
+    process.exit(0);
+  });
+});
 
 // Generic error handler used by all endpoints.
 function handleError(res, reason, message, code) {
@@ -47,27 +73,27 @@ function handleError(res, reason, message, code) {
  */
 
  app.get("/api/npcs", function(req, res) {
-   db.collection(NPCS_COLLECTION).find({}).toArray(function(err, docs) {
+   models.Npcs.find({}).exec(function(err, npcs){
      if (err) {
        handleError(res, err.message, "Failed to get npcs.");
      } else {
-       res.status(200).json(docs);
+       res.status(200).json(npcs);
      }
    });
  });
 
  app.post("/api/npcs", function(req, res) {
-   var newNpc = req.body;
 
    if (!req.body.name) {
      handleError(res, "Invalid user input", "Must provide a name.", 400);
    }
 
-   db.collection(NPCS_COLLECTION).insertOne(newNpc, function(err, doc) {
+   var newNpc = new models.Npcs(req.body);
+   newNpc.save(function(err,doc){
      if (err) {
        handleError(res, err.message, "Failed to create new npc.");
      } else {
-       res.status(201).json(doc.ops[0]);
+       res.status(201).json(doc);
      }
    });
  });
@@ -76,7 +102,7 @@ function handleError(res, reason, message, code) {
   *    GET: find npc by id
   *    PUT: update npc by id
   *    DELETE: deletes npc by id
-  */
+
  app.get("/api/npcs/:id", function(req, res) {
    db.collection(NPCS_COLLECTION).findOne({ _id: new ObjectID(req.params.id) }, function(err, doc) {
      if (err) {
@@ -110,3 +136,4 @@ function handleError(res, reason, message, code) {
      }
    });
  });
+*/
