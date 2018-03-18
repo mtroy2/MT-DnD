@@ -3,11 +3,15 @@ import { NgModule } from '@angular/core';
 
 
 import { AppComponent } from './app.component';
+import { NpcDetailsComponent } from './npcs/npc-details/npc-details.component';
+import { NpcListComponent } from './npcs/npc-list/npc-list.component';
 
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    NpcDetailsComponent,
+    NpcListComponent
   ],
   imports: [
     BrowserModule
