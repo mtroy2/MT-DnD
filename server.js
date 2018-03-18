@@ -8,6 +8,10 @@ var NPCS_COLLECTION = "npcs";
 var app = express();
 app.use(bodyParser.json());
 
+// Create link to Angular build directory
+var distDir = __dirname + "/dist/";
+app.use(express.static(distDir));
+
 // Create a database variable outside of the database connection callback to reuse the connection pool in your app.
 var db;
 
@@ -41,11 +45,6 @@ function handleError(res, reason, message, code) {
  *    GET: finds all npcs
  *    POST: creates a new npc
  */
-
- /*  "/api/npcs"
-  *    GET: finds all npcs
-  *    POST: creates a new npc
-  */
 
  app.get("/api/npcs", function(req, res) {
    db.collection(NPCS_COLLECTION).find({}).toArray(function(err, docs) {
@@ -92,7 +91,7 @@ function handleError(res, reason, message, code) {
    var updateDoc = req.body;
    delete updateDoc._id;
 
-   db.collection(NPCS_COLLECTION).updateOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err, doc) {
+   db.collection(NPCS_COLLECTION).replaceOne({_id: new ObjectID(req.params.id)}, updateDoc, function(err, doc) {
      if (err) {
        handleError(res, err.message, "Failed to update npc");
      } else {

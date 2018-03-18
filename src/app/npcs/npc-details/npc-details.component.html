@@ -1,3 +1,21 @@
-<p>
-  npc-details works!
-</p>
+<div *ngIf="npc" class="row">
+  <div class="col-md-12">
+    <h2 *ngIf="npc._id">Npc Details</h2>
+    <h2 *ngIf="!npc._id">New Npc</h2>
+  </div>
+</div>
+<div *ngIf="npc" class="row">
+  <form class="col-md-12">
+    <div class="form-group">
+      <label for="npc-name">Name</label>
+      <input class="form-control" name="npc-name" [(ngModel)]="npc.name" placeholder="Name"/>
+    </div>
+    <div class="form-group">
+      <label for="npc-age">Age</label>
+      <input class="form-control" name="npc-age" [(ngModel)]="npc.age"/>
+    </div>
+    <button class="btn btn-primary" *ngIf="!npc._id" (click)="createNpc(npc)">Create</button>
+    <button class="btn btn-info" *ngIf="npc._id" (click)="updateNpc(npc)">Update</button>
+    <button class="btn btn-danger" *ngIf="npc._id" (click)="deleteNpc(npc._id)">Delete</button>
+  </form>
+</div>
